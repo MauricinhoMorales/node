@@ -8367,7 +8367,7 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 [[package]]
 name = "sugarfunge-asset"
 version = "0.1.0"
-source = "git+https://github.com/SugarFunge/sugarfunge-asset?branch=SBP-M1-changes#b736e5f9d088abbb32e968750c130d3cfc24f31b"
+source = "git+https://github.com/SugarFunge/sugarfunge-asset?branch=SBP-M1-changes#d0e7034a1a7083ac3ae531232ea7204633b975c9"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
