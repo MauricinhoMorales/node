@@ -1,11 +1,13 @@
 use sc_service::ChainType;
+use serde_json::json;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use sugarfunge_runtime::{
-    AccountId, AuraConfig, BalancesConfig, GrandpaConfig, RuntimeGenesisConfig, Signature,
-    SudoConfig, SystemConfig, WASM_BINARY,
+    opaque::SessionKeys, AccountId, AuraConfig, Balance, BalancesConfig, CouncilConfig,
+    GrandpaConfig, RuntimeGenesisConfig, SessionConfig, Signature, SudoConfig, SystemConfig,
+    ValidatorSetConfig, DOLLARS, WASM_BINARY,
 };
 
 // The URL for the telemetry server.
@@ -31,9 +33,17 @@ where
     AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
+fn session_keys(aura: AuraId, grandpa: GrandpaId) -> SessionKeys {
+    SessionKeys { aura, grandpa }
+}
+
 /// Generate an Aura authority key.
-pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
-    (get_from_seed::<AuraId>(s), get_from_seed::<GrandpaId>(s))
+pub fn authority_keys_from_seed(s: &str) -> (AccountId, AuraId, GrandpaId) {
+    (
+        get_account_id_from_seed::<sr25519::Public>(s),
+        get_from_seed::<AuraId>(s),
+        get_from_seed::<GrandpaId>(s),
+    )
 }
 
 pub fn development_config() -> Result<ChainSpec, String> {
@@ -70,7 +80,15 @@ pub fn development_config() -> Result<ChainSpec, String> {
         None,
         None,
         // Properties
-        None,
+        Some(
+            json!({
+              "tokenDecimals": 18,
+              "tokenSymbol": "SUGAR"
+            })
+            .as_object()
+            .expect("Provided valid json map")
+            .clone(),
+        ),
         // Extensions
         None,
     ))
@@ -119,9 +137,17 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
         None,
         // Protocol ID
         None,
+        None,
         // Properties
-        None,
-        None,
+        Some(
+            json!({
+              "tokenDecimals": 18,
+              "tokenSymbol": "SUGAR"
+            })
+            .as_object()
+            .expect("Provided valid json map")
+            .clone(),
+        ),
         // Extensions
         None,
     ))
@@ -130,11 +156,13 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 /// Configure initial storage state for FRAME modules.
 fn testnet_genesis(
     wasm_binary: &[u8],
-    initial_authorities: Vec<(AuraId, GrandpaId)>,
+    initial_authorities: Vec<(AccountId, AuraId, GrandpaId)>,
     root_key: AccountId,
     endowed_accounts: Vec<AccountId>,
     _enable_println: bool,
 ) -> RuntimeGenesisConfig {
+    const ENDOWMENT: Balance = 100_000_000 * DOLLARS;
+
     RuntimeGenesisConfig {
         system: SystemConfig {
             // Add Wasm runtime to storage.
@@ -146,17 +174,41 @@ fn testnet_genesis(
             balances: endowed_accounts
                 .iter()
                 .cloned()
-                .map(|k| (k, 1 << 60))
+                .map(|k| (k, ENDOWMENT))
                 .collect(),
         },
+        validator_set: ValidatorSetConfig {
+            initial_validators: initial_authorities
+                .iter()
+                .map(|x| x.0.clone())
+                .collect::<Vec<_>>(),
+        },
+        session: SessionConfig {
+            keys: initial_authorities
+                .iter()
+                .map(|x| {
+                    (
+                        x.0.clone(),
+                        x.0.clone(),
+                        session_keys(x.1.clone(), x.2.clone()),
+                    )
+                })
+                .collect::<Vec<_>>(),
+        },
+        council: CouncilConfig {
+            members: initial_authorities
+                .iter()
+                .map(|x| x.0.clone())
+                .collect::<Vec<_>>(),
+            phantom: Default::default(),
+        },
+        // Because the validators are provided by the session pallet,
+        // we do not initialize them explicitly for Aura and Grandpa pallets
         aura: AuraConfig {
-            authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect(),
+            authorities: vec![],
         },
         grandpa: GrandpaConfig {
-            authorities: initial_authorities
-                .iter()
-                .map(|x| (x.1.clone(), 1))
-                .collect(),
+            authorities: vec![],
             ..Default::default()
         },
         sudo: SudoConfig {

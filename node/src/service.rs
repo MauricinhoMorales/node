@@ -72,6 +72,7 @@ pub fn new_partial(
         .transpose()?;
 
     let executor = sc_service::new_native_or_wasm_executor(config);
+
     let (client, backend, keystore_container, task_manager) =
         sc_service::new_full_parts::<Block, RuntimeApi, _>(
             config,
@@ -164,6 +165,7 @@ pub fn new_full(config: Configuration) -> Result<TaskManager, ServiceError> {
             .expect("Genesis block exists; qed"),
         &config.chain_spec,
     );
+
     net_config.add_notification_protocol(sc_consensus_grandpa::grandpa_peers_set_config(
         grandpa_protocol_name.clone(),
     ));
@@ -235,9 +237,9 @@ pub fn new_full(config: Configuration) -> Result<TaskManager, ServiceError> {
         task_manager: &mut task_manager,
         transaction_pool: transaction_pool.clone(),
         rpc_builder: rpc_extensions_builder,
+        tx_handler_controller,
         backend,
         system_rpc_tx,
-        tx_handler_controller,
         sync_service: sync_service.clone(),
         config,
         telemetry: telemetry.as_mut(),
