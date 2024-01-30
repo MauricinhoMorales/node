@@ -2745,6 +2745,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
+name = "hex-literal"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
+
+[[package]]
 name = "hkdf"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4662,6 +4668,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-collective"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v1.0.0#948fbd2fd1233dc26dbb9f9bbc1d2cca2c03945d"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-grandpa"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v1.0.0#948fbd2fd1233dc26dbb9f9bbc1d2cca2c03945d"
@@ -4682,6 +4705,23 @@ dependencies = [
  "sp-session",
  "sp-staking",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-scheduler"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v1.0.0#948fbd2fd1233dc26dbb9f9bbc1d2cca2c03945d"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-weights",
 ]
 
 [[package]]
@@ -8284,7 +8324,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "sugarfunge-primitives 0.1.0",
+ "sugarfunge-primitives",
 ]
 
 [[package]]
@@ -8305,7 +8345,7 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sugarfunge-asset",
- "sugarfunge-primitives 0.1.0",
+ "sugarfunge-primitives",
 ]
 
 [[package]]
@@ -8325,7 +8365,7 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sugarfunge-asset",
- "sugarfunge-primitives 0.1.0",
+ "sugarfunge-primitives",
 ]
 
 [[package]]
@@ -8343,7 +8383,7 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sugarfunge-asset",
- "sugarfunge-primitives 0.1.0",
+ "sugarfunge-primitives",
 ]
 
 [[package]]
@@ -8360,7 +8400,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "sugarfunge-primitives 0.1.0",
+ "sugarfunge-primitives",
 ]
 
 [[package]]
@@ -8377,7 +8417,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "sugarfunge-primitives 0.1.0",
+ "sugarfunge-primitives",
 ]
 
 [[package]]
@@ -8396,18 +8436,19 @@ dependencies = [
  "sp-std",
  "sugarfunge-asset",
  "sugarfunge-bundle",
- "sugarfunge-primitives 0.1.0",
+ "sugarfunge-primitives",
 ]
 
 [[package]]
 name = "sugarfunge-node"
-version = "4.0.0-dev"
+version = "0.1.0"
 dependencies = [
  "clap",
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "frame-system",
  "futures",
+ "getrandom 0.2.11",
  "jsonrpsee",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc",
@@ -8426,6 +8467,7 @@ dependencies = [
  "sc-telemetry",
  "sc-transaction-pool",
  "sc-transaction-pool-api",
+ "serde_json",
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
@@ -8440,27 +8482,13 @@ dependencies = [
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "sugarfunge-runtime",
+ "tokio",
  "try-runtime-cli",
 ]
 
 [[package]]
 name = "sugarfunge-primitives"
 version = "0.1.0"
-dependencies = [
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-application-crypto",
- "sp-core",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "sugarfunge-primitives"
-version = "0.1.0"
-source = "git+https://github.com/SugarFunge/sugarfunge-primitives?branch=SBP-M1-changes#6c597e97c0d7fe78ebbaec4706b05d9530628928"
 dependencies = [
  "frame-system",
  "parity-scale-codec",
@@ -8483,9 +8511,15 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
+ "getrandom 0.2.11",
+ "hex-literal",
+ "log",
  "pallet-aura",
  "pallet-balances",
+ "pallet-collective",
  "pallet-grandpa",
+ "pallet-scheduler",
+ "pallet-session",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -8506,8 +8540,11 @@ dependencies = [
  "sp-version",
  "substrate-wasm-builder",
  "sugarfunge-asset",
+ "sugarfunge-bag",
  "sugarfunge-bundle",
- "sugarfunge-primitives 0.1.0 (git+https://github.com/SugarFunge/sugarfunge-primitives?branch=SBP-M1-changes)",
+ "sugarfunge-market",
+ "sugarfunge-primitives",
+ "sugarfunge-validator-set",
 ]
 
 [[package]]
