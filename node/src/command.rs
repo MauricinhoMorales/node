@@ -207,6 +207,7 @@ pub fn run() -> sc_cli::Result<()> {
                     sc_service::TaskManager::new(config.tokio_handle.clone(), registry)
                         .map_err(|e| sc_cli::Error::Service(sc_service::Error::Prometheus(e)))?;
                 let info_provider = timestamp_with_aura_info(6000);
+
                 Ok((
                     cmd.run::<Block, ExtendedHostFunctions<
                         sp_io::SubstrateHostFunctions,

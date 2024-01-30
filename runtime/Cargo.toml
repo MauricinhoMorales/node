@@ -12,9 +12,6 @@ publish = false
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-hex-literal = { version = "0.4.1", optional = true }
-log = { version = "0.4.17", default-features = false }
-getrandom = { version = "0.2", features = ["js"] }
 codec = { package = "parity-scale-codec", version = "3.6.1", default-features = false, features = ["derive"] }
 scale-info = { version = "2.5.0", default-features = false, features = ["derive"] }
 
@@ -40,10 +37,6 @@ sp-session = { version = "4.0.0-dev", default-features = false, git = "https://g
 sp-std = { version = "8.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
 sp-transaction-pool = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
 sp-version = { version = "22.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-pallet-scheduler = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
-pallet-session = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false, features = [
-	"historical",
-] }
 
 # Used for the node template's RPCs
 frame-system-rpc-runtime-api = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
@@ -53,16 +46,10 @@ pallet-transaction-payment-rpc-runtime-api = { version = "4.0.0-dev", default-fe
 frame-benchmarking = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", optional = true , branch = "polkadot-v1.0.0" }
 frame-system-benchmarking = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", optional = true , branch = "polkadot-v1.0.0" }
 
-# Collective
-pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v1.0.0", default-features = false }
-
 # Sugarfunge dependencies
 sugarfunge-asset = { default-features = false, path = "../pallets/asset" }
-sugarfunge-bag = { default-features = false, path = "../pallets/bag" }
 sugarfunge-bundle = { default-features = false, path = "../pallets/bundle" }
-sugarfunge-market = { default-features = false, path = "../pallets/market" }
-primitives = { package = "sugarfunge-primitives", path = "../primitives", default-features = false }
-sugarfunge-validator-set = { default-features = false, path = "../pallets/validator-set" }
+sugarfunge-primitives = { git = "https://github.com/SugarFunge/sugarfunge-primitives", branch = "SBP-M1-changes", default-features = false }
 
 [build-dependencies]
 substrate-wasm-builder = { version = "5.0.0-dev", git = "https://github.com/paritytech/substrate.git", optional = true , branch = "polkadot-v1.0.0" }
@@ -87,9 +74,6 @@ std = [
 	"pallet-timestamp/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
-	"pallet-scheduler/std",
-	"pallet-session/std",
-	"pallet-collective/std",
 	"sp-api/std",
 	"sp-block-builder/std",
 	"sp-consensus-aura/std",
@@ -105,10 +89,7 @@ std = [
 	"sugarfunge-asset/std",
 	"sugarfunge-bundle/std",
 	"substrate-wasm-builder",
-	"primitives/std",
-	"sugarfunge-market/std",
-	"sugarfunge-bag/std",
-	"sugarfunge-validator-set/std",
+	"sugarfunge-primitives/std",
 ]
 runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",

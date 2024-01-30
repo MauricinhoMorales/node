@@ -6,12 +6,10 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use frame_system::EnsureRoot;
 use pallet_grandpa::AuthorityId as GrandpaId;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_runtime::traits::OpaqueKeys;
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, NumberFor, One},
@@ -22,22 +20,21 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-use sugarfunge_validator_set as validator_set;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
     construct_runtime, parameter_types,
     traits::{
-        ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, Contains, EitherOfDiverse,
-        EqualPrivilegeOnly, FindAuthor, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo,
+        ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness,
+        StorageInfo,
     },
     weights::{
         constants::{
             BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND,
         },
-        ConstantMultiplier, IdentityFee, Weight,
+        IdentityFee, Weight,
     },
-    ConsensusEngineId, PalletId, StorageValue,
+    PalletId, StorageValue,
 };
 pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
@@ -46,16 +43,18 @@ use pallet_transaction_payment::{ConstFeeMultiplier, CurrencyAdapter, Multiplier
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
-pub use sugarfunge_bundle::Call as BundleCall;
-pub use sugarfunge_market::Call as MarketCall;
 
-mod constants;
+pub const MILLICENTS: Balance = 10_000_000_000_000;
+pub const CENTS: Balance = 1_000 * MILLICENTS;
+pub const DOLLARS: Balance = 100 * CENTS;
 
-pub use constants::{currency::*, time::*};
-pub use primitives::{
-    AccountId, AccountIndex, Amount, AssetId, Balance, BlockNumber, ClassId, Hash, Moment, Nonce,
+pub use sugarfunge_primitives::{
+    AccountId, AccountIndex, Amount, AssetId, Balance, BlockNumber, ClassId, Hash, Index, Moment,
     Signature,
 };
+
+/// Index of a transaction in the chain.
+pub type Nonce = u32;
 
 const METADATA_SIZE: u32 = 1024 * 4;
 
@@ -264,106 +263,16 @@ impl pallet_sudo::Config for Runtime {
     type WeightInfo = pallet_sudo::weights::SubstrateWeight<Runtime>;
 }
 
-parameter_types! {
-    pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
-        BlockWeights::get().max_block;
-    pub const MaxScheduledPerBlock: u32 = 50;
-    pub const NoPreimagePostponement: Option<u32> = Some(10);
-}
-
-impl pallet_scheduler::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type RuntimeOrigin = RuntimeOrigin;
-    type PalletsOrigin = OriginCaller;
-    type RuntimeCall = RuntimeCall;
-    type MaximumWeight = MaximumSchedulerWeight;
-    type ScheduleOrigin = EnsureRoot<AccountId>;
-    type MaxScheduledPerBlock = MaxScheduledPerBlock;
-    type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
-    type OriginPrivilegeCmp = EqualPrivilegeOnly;
-    type Preimages = ();
-}
-
-parameter_types! {
-    pub const CouncilMotionDuration: BlockNumber = 3 * MINUTES;
-    pub const CouncilMaxProposals: u32 = 100;
-    pub const CouncilMaxMembers: u32 = 100;
-    pub MaxProposalWeight: Weight = Perbill::from_percent(50) * BlockWeights::get().max_block;
-}
-
-type CouncilCollective = pallet_collective::Instance1;
-impl pallet_collective::Config<CouncilCollective> for Runtime {
-    type RuntimeOrigin = RuntimeOrigin;
-    type Proposal = RuntimeCall;
-    type RuntimeEvent = RuntimeEvent;
-    type MotionDuration = CouncilMotionDuration;
-    type MaxProposals = CouncilMaxProposals;
-    type MaxMembers = CouncilMaxMembers;
-    type DefaultVote = pallet_collective::PrimeDefaultVote;
-    type SetMembersOrigin = EnsureRoot<AccountId>;
-    type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
-    type MaxProposalWeight = MaxProposalWeight;
-}
-
-type EnsureRootOrHalfCouncil = EitherOfDiverse<
-    EnsureRoot<AccountId>,
-    pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
->;
-
-impl validator_set::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type AddRemoveOrigin = EnsureRootOrHalfCouncil;
-    type MinAuthorities = ConstU32<1>;
-    type MaxAuthorities = ConstU32<32>;
-}
-
-parameter_types! {
-    pub const Period: u32 = 2 * MINUTES;
-    pub const Offset: u32 = 0;
-}
-
-impl pallet_session::Config for Runtime {
-    type ValidatorId = <Self as frame_system::Config>::AccountId;
-    type ValidatorIdOf = validator_set::ValidatorOf<Self>;
-    type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
-    type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
-    type SessionManager = ValidatorSet;
-    type SessionHandler = <opaque::SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
-    type Keys = opaque::SessionKeys;
-    type WeightInfo = ();
-    type RuntimeEvent = RuntimeEvent;
-}
-
-parameter_types! {
-    pub const CreateAssetClassDeposit: Balance = 500 * MILLICENTS;
-    pub const CreateExchangeDeposit: Balance = 500 * MILLICENTS;
-    pub const CreateBagDeposit: Balance = 500 * MILLICENTS;
-    pub const CreateCurrencyClassDeposit: Balance = 500 * MILLICENTS;
-}
-
-parameter_types! {
-    pub const MaxClassMetadata: u32 = METADATA_SIZE;
-    pub const MaxAssetMetadata: u32 = METADATA_SIZE;
-}
-
+// SBP-M1 review: no benchmarks, invalid static weights
 impl sugarfunge_asset::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type CreateAssetClassDeposit = CreateAssetClassDeposit;
+    type CreateAssetClassDeposit = ConstU128<{ 500 * MILLICENTS }>;
     type Currency = Balances;
+    // SBP-M1 review: are these overkill for expected usage for the life of the chain?
     type AssetId = u64;
     type ClassId = u64;
-    type MaxClassMetadata = MaxClassMetadata;
-    type MaxAssetMetadata = MaxAssetMetadata;
-}
-
-parameter_types! {
-    pub const BagModuleId: PalletId = PalletId(*b"sug/crow");
-    pub const MarketModuleId: PalletId = PalletId(*b"sug/mrkt");
-}
-
-parameter_types! {
-    pub const MaxRates: u32 = 20;
-    pub const MaxMetadata: u32 = METADATA_SIZE;
+    type MaxClassMetadata = ConstU32<{ METADATA_SIZE }>;
+    type MaxAssetMetadata = ConstU32<{ METADATA_SIZE }>;
 }
 
 impl sugarfunge_bundle::Config for Runtime {
@@ -371,27 +280,6 @@ impl sugarfunge_bundle::Config for Runtime {
     type PalletId = BundleModuleId;
     type Currency = Balances;
     type MaxAssets = MaxAssets;
-}
-
-parameter_types! {
-    pub const MaxOwners: u32 = 20;
-}
-
-impl sugarfunge_bag::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type PalletId = BagModuleId;
-    type CreateBagDeposit = CreateBagDeposit;
-    type Currency = Balances;
-    type MaxOwners = MaxOwners;
-}
-
-impl sugarfunge_market::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type PalletId = MarketModuleId;
-    type MarketId = u64;
-    type MarketRateId = u64;
-    type MaxRates = MaxRates;
-    type MaxMetadata = MaxMetadata;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -405,19 +293,8 @@ construct_runtime!(
         TransactionPayment: pallet_transaction_payment,
         Sudo: pallet_sudo,
         // Include the custom logic from the pallet-template in the runtime.
-        Scheduler: pallet_scheduler,
-        Council: pallet_collective::<Instance1>,
-
-        ValidatorSet: validator_set,
-        Session: pallet_session,
-
-        // SugarFunge pallets
         Asset: sugarfunge_asset,
-        // Dao: sugarfunge_dao,
         Bundle: sugarfunge_bundle,
-        Bag: sugarfunge_bag,
-        // Exgine: sugarfunge_exgine,
-        Market: sugarfunge_market,
     }
 );
 
